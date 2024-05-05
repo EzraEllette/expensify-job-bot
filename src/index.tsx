@@ -1,6 +1,7 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import reportWebVitals from "./reportWebVitals";
+import { Analytics } from "@vercel/analytics/react";
 import { RouterProvider, createBrowserRouter } from "react-router-dom";
 import Subscribe from "./routes/Subscribe";
 import Unsubscribe from "./routes/Unsubscribe";
@@ -22,6 +23,7 @@ const router = createBrowserRouter([
 
 root.render(
   <React.StrictMode>
+    <Analytics />
     <RouterProvider router={router} />
   </React.StrictMode>
 );
