@@ -208,6 +208,7 @@ async function shareIssues(issues: Issue[]): Promise<{
 
   const smtpClient = NodeMailer.createTransport({
     host: SMTP_SERVER_URL,
+    port: 587,
     secure: true,
     auth: {
       user: SMTP_USERNAME,
