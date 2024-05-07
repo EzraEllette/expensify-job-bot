@@ -208,7 +208,7 @@ async function shareIssues(issues: Issue[]): Promise<{
 
   const smtpClient = NodeMailer.createTransport({
     host: SMTP_SERVER_URL,
-    port: 587,
+    requireTLS: true,
     secure: true,
     auth: {
       user: SMTP_USERNAME,
@@ -220,7 +220,7 @@ async function shareIssues(issues: Issue[]): Promise<{
     // send the email
     try {
       await smtpClient.sendMail({
-        from: `Expensify Job Bot <${SMTP_USERNAME}>`,
+        from: `${SMTP_USERNAME}`,
         bcc: emailList,
         subject: issue.title,
         text: `${issue.url}`,
