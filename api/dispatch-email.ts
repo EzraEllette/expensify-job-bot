@@ -207,9 +207,8 @@ async function shareIssues(issues: Issue[]): Promise<{
   }
 
   const smtpClient = NodeMailer.createTransport({
-    host: SMTP_SERVER_URL,
-    requireTLS: true,
-    secure: true,
+    service: SMTP_SERVER_URL === `smtp.gmail.com` ? "gmail" : undefined,
+    host: SMTP_SERVER_URL === `smtp.gmail.com` ? undefined : SMTP_SERVER_URL,
     auth: {
       user: SMTP_USERNAME,
       pass: SMTP_PASSWORD,
