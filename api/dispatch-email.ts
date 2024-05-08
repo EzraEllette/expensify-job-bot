@@ -219,7 +219,7 @@ async function shareIssues(issues: Issue[]): Promise<{
     // send the email
     try {
       await smtpClient.sendMail({
-        from: `${SMTP_USERNAME}`,
+        from: `Expensify Job Bot <${SMTP_USERNAME}>`,
         bcc: emailList,
         subject: issue.title,
         text: `${issue.url}`,
