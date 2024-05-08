@@ -65,7 +65,7 @@ export async function POST(
     lastSentIssue = {
       id: issues.data[0].number - 1,
       shared: false,
-      url: issues.data[0].url,
+      url: issues.data[0].html_url,
       title: issues.data[0].title,
     };
   }
@@ -77,7 +77,7 @@ export async function POST(
       newIssues.push({
         id: issue.number,
         shared: false,
-        url: issue.url,
+        url: issue.html_url,
         title: issue.title,
       });
     }
