@@ -1,4 +1,4 @@
-import { createClient } from "@vercel/postgres";
+import { VercelClient, createClient } from "@vercel/postgres";
 import NodeMailer from "nodemailer";
 import {
   DISPATCH_TOKEN,
@@ -6,6 +6,7 @@ import {
   SMTP_PASSWORD,
   SMTP_SERVER_URL,
   SMTP_USERNAME,
+  VERCEL_ENV,
 } from "./constants.js";
 const GITHUB_URL = "https://api.github.com/repos/Expensify/App";
 const client = createClient();
@@ -29,20 +30,23 @@ export async function POST(
   try {
     await client.connect();
   } catch (error: any) {
-    return new Response("Failed to connect to database", { status: 500 });
+    return handleError(error, "Failed to connect to database", 500);
   }
 
   const issues = await getIssues();
 
-  if (issues.error) {
-    return new Response("Failed to fetch issues", { status: 500 });
-  }
+  if (issues.error)
+    return handleError(issues.error, "Failed to fetch issues", 500);
 
   let { data: lastSentIssue, error: getLastSentIssueError } =
     await getLastSentIssue();
 
   if (getLastSentIssueError) {
-    return new Response("Failed to get last sent issue", { status: 500 });
+    return handleError(
+      getLastSentIssueError,
+      "Failed to get last sent issue",
+      500
+    );
   }
 
   if (!lastSentIssue) {
@@ -71,7 +75,11 @@ export async function POST(
     const updateIssuesResult = await updateIssues(newIssues);
 
     if (updateIssuesResult.error) {
-      return new Response("Failed to update issues", { status: 500 });
+      return handleError(
+        updateIssuesResult.error,
+        "Failed to update issues",
+        500
+      );
     }
   }
 
@@ -79,7 +87,11 @@ export async function POST(
     await getUnsharedIssues();
 
   if (getUnsharedIssuesError) {
-    return new Response("Failed to fetch unshared issues", { status: 500 });
+    return handleError(
+      getUnsharedIssuesError,
+      "Failed to fetch unshared issues",
+      500
+    );
   }
 
   if (unsharedIssues.length === 0) {
@@ -89,11 +101,20 @@ export async function POST(
   const { error: shareIssuesError } = await shareIssues(unsharedIssues);
 
   if (shareIssuesError) {
-    return new Response("Failed to share issues", { status: 500 });
+    return handleError(shareIssuesError, "Failed to share issues", 500);
   }
 
-  waitUntil(client.end());
+  waitUntil(tearDown());
   return new Response("Shared successfully", { status: 200 });
+}
+
+function handleError(error: Error, message: string, status: number): Response {
+  console.error(`Error: ${message} ${status}`, error);
+
+  return new Response(message, { status });
+}
+async function tearDown() {
+  await client.end();
 }
 
 async function getIssues() {
@@ -249,6 +270,13 @@ async function getEmailList(): Promise<{
   data: string[];
   error: Error | null;
 }> {
+  if (VERCEL_ENV === `development` || VERCEL_ENV === `preview`) {
+    return {
+      data: [`ezrasellette@gmail.com`],
+      error: null,
+    };
+  }
+
   try {
     const { rows } = await client.sql`
     SELECT email FROM emails
