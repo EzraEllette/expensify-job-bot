@@ -1,4 +1,4 @@
-import { VercelClient, createClient } from "@vercel/postgres";
+import { createClient } from "@vercel/postgres";
 import NodeMailer from "nodemailer";
 import {
   DISPATCH_TOKEN,
@@ -30,7 +30,9 @@ export async function POST(
   try {
     await client.connect();
   } catch (error: any) {
-    return handleError(error, "Failed to connect to database", 500);
+    if (!error.message.includes("Client has already been connected.")) {
+      return handleError(error, "Failed to connect to database", 500);
+    }
   }
 
   const issues = await getIssues();
