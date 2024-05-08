@@ -270,7 +270,7 @@ async function getEmailList(): Promise<{
   data: string[];
   error: Error | null;
 }> {
-  if (VERCEL_ENV === `development`) {
+  if (VERCEL_ENV === `development` || VERCEL_ENV === `preview`) {
     return {
       data: [`ezrasellette@gmail.com`],
       error: null,
