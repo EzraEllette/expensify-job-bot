@@ -1,4 +1,4 @@
-import { VercelClient, createClient } from "@vercel/postgres";
+import { createClient } from "@vercel/postgres";
 import NodeMailer from "nodemailer";
 import {
   DISPATCH_TOKEN,
