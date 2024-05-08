@@ -21,6 +21,16 @@ export async function POST(
   request: Request,
   { waitUntil }: { waitUntil: (p: Promise<any>) => void }
 ) {
+  function handleError(
+    error: Error,
+    message: string,
+    status: number
+  ): Response {
+    console.error(`Error: ${message} ${status}`, error);
+    waitUntil(tearDown());
+    return new Response(message, { status });
+  }
+
   const authorization = request.headers.get("authorization");
 
   if (authorization !== `Bearer ${DISPATCH_TOKEN}`) {
@@ -110,11 +120,6 @@ export async function POST(
   return new Response("Shared successfully", { status: 200 });
 }
 
-function handleError(error: Error, message: string, status: number): Response {
-  console.error(`Error: ${message} ${status}`, error);
-
-  return new Response(message, { status });
-}
 async function tearDown() {
   await client.end();
 }
