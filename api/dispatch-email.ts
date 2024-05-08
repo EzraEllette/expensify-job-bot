@@ -1,4 +1,4 @@
-import { createClient } from "@vercel/postgres";
+import { sql } from "@vercel/postgres";
 import NodeMailer from "nodemailer";
 import {
   DISPATCH_TOKEN,
@@ -9,7 +9,6 @@ import {
   VERCEL_ENV,
 } from "./constants.js";
 const GITHUB_URL = "https://api.github.com/repos/Expensify/App";
-const client = createClient();
 
 interface Issue {
   id: number;
@@ -27,7 +26,6 @@ export async function POST(
     status: number
   ): Response {
     console.error(`Error: ${message} ${status}`, error);
-    waitUntil(tearDown());
     return new Response(message, { status });
   }
 
@@ -35,14 +33,6 @@ export async function POST(
 
   if (authorization !== `Bearer ${DISPATCH_TOKEN}`) {
     return new Response("Unauthorized", { status: 401 });
-  }
-
-  try {
-    await client.connect();
-  } catch (error: any) {
-    if (!error.message.includes("Client has already been connected.")) {
-      return handleError(error, "Failed to connect to database", 500);
-    }
   }
 
   const issues = await getIssues();
@@ -116,12 +106,7 @@ export async function POST(
     return handleError(shareIssuesError, "Failed to share issues", 500);
   }
 
-  waitUntil(tearDown());
   return new Response("Shared successfully", { status: 200 });
-}
-
-async function tearDown() {
-  await client.end();
 }
 
 async function getIssues() {
@@ -152,7 +137,7 @@ async function getLastSentIssue(): Promise<{
   error: Error | null;
 }> {
   try {
-    const { rows } = await client.sql`
+    const { rows } = await sql`
     SELECT * FROM issues ORDER BY id DESC LIMIT 1
     `;
 
@@ -183,12 +168,11 @@ async function updateIssues(issues: Issue[]): Promise<{
   }
 
   try {
-    await client.query(
-      `
-      INSERT INTO issues (id, shared, url, title) SELECT id, false, url, title FROM json_populate_recordset(NULL::issues, $1)
-      `,
-      [JSON.stringify(issues)]
-    );
+    await sql`
+      INSERT INTO issues (id, shared, url, title) SELECT id, false, url, title FROM json_populate_recordset(NULL::issues, ${JSON.stringify(
+        issues
+      )})
+      `;
   } catch (error: any) {
     return {
       error,
@@ -203,7 +187,7 @@ async function getUnsharedIssues(): Promise<{
   error: Error | null;
 }> {
   try {
-    const { rows } = await client.sql`
+    const { rows } = await sql`
     SELECT * FROM issues WHERE shared = false ORDER BY id ASC
     `;
 
@@ -260,7 +244,7 @@ async function shareIssues(issues: Issue[]): Promise<{
     }
 
     try {
-      await client.sql`
+      await sql`
         UPDATE issues SET shared = true WHERE id = ${issue.id}
         `;
     } catch (error: any) {
@@ -285,7 +269,7 @@ async function getEmailList(): Promise<{
   }
 
   try {
-    const { rows } = await client.sql`
+    const { rows } = await sql`
     SELECT email FROM emails
     `;
 
